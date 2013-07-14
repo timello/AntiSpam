@@ -22,8 +22,7 @@
   <th align="right">Username:</th>
   <td>
     <input name="extern_id" value="[% user.extern_id FILTER html %]"
-           size="35"
-           [% 'disabled' IF Bugzilla.params.user_verify_class.match('LDAP') %]>
+           size="35">
   </td>
 </tr>
 <tr>

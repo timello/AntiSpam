@@ -29,6 +29,7 @@ use Bugzilla::Extension::AntiSpam::Util qw(login_to_extern_id
 use Bugzilla::User;
 use Bugzilla::Object qw(check_boolean);
 use Bugzilla::Util qw(trick_taint trim);
+use Scalar::Util qw(blessed);
 
 our $VERSION = '0.01';
 
@@ -188,6 +189,8 @@ sub _filter_bug_process_bugmail {
 
 sub _filter_global_user {
     my ($vars) = @_;
+
+    return if !blessed $vars->{who};
 
     $vars->{who}->{login_name} = $vars->{who}->extern_id
         if $vars->{who}->is_email_hidden;
