@@ -420,7 +420,7 @@ sub _filter_bug_create {
     foreach my $comp (@{ $vars->{product}->components }) {
         $comp->default_assignee->{login_name}
             = login_to_extern_id($comp->default_assignee->login);
-        if (Bugzilla->params->{useqacontact}) {
+        if (Bugzilla->params->{useqacontact} and $comp->default_qa_contact) {
             $comp->default_qa_contact->{login_name}
                = login_to_extern_id($comp->default_qa_contact->login);
         }
