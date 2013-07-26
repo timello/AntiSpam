@@ -45,7 +45,8 @@ BEGIN {
 
 sub _is_email_hidden {
     my ($self) = @_;
-    return get_all_settings($self->id)->{hide_email_address}->{value} eq 'on' ? 1 : 0;
+    my $setting = get_all_settings($self->id)->{hide_email_address};
+    return $setting->{value} eq 'on' ? 1 : 0;
 }
 
 sub install_before_final_checks {
