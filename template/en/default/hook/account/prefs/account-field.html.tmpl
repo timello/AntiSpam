@@ -18,22 +18,10 @@
   #   Tiago Mello <timello@bugzilla.org>
   #%]
 
-[% IF user_can_set_hide_email_address %]
-  [% IF !Bugzilla.params.user_verify_class.match('LDAP') %]
-    <tr>
-      <th align="right">Username:</th>
-      <td><input name="extern_id" value="[% user.extern_id FILTER html %]"
-                 size="35"></td>
-    </tr>
-  [% END %]
+[% IF !Bugzilla.params.user_verify_class.match('LDAP') %]
   <tr>
-    <td>&nbsp;</td>
-    <td>
-      <label for="is_email_hidden">
-        <input type="checkbox" name="is_email_hidden" id="is_email_hidden"
-               value="1" [% 'checked' IF user.settings.hide_email_address.value == 'on' %]>
-        Hide my email address
-      </label>
-    </td>
+    <th align="right">Username:</th>
+    <td><input name="extern_id" value="[% user.extern_id FILTER html %]"
+               size="35"></td>
   </tr>
 [% END %]

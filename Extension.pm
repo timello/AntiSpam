@@ -470,14 +470,10 @@ sub _user_match_field {
 sub _save_account_username {
     my ($vars) = @_;
     if (defined $vars->{changes_saved}
-        and $vars->{user_can_set_hide_email_address})
+        and Bugzilla->params->{user_verify_class} =~ /LDAP/)
     {
         my $user = Bugzilla->user;
-        my $setting = $user->settings->{hide_email_address};
         my $params = Bugzilla->input_params;
-        my $value = $params->{is_email_hidden} ? 'on' : 'off';
-        $setting->validate_value($value);
-        $setting->set($value);
         my $username = $params->{extern_id};
         $user->set_extern_id($username) if defined $username;
         $user->update();
