@@ -28,6 +28,7 @@ use Bugzilla::Extension::AntiSpam::Util qw(login_to_extern_id
 
 use Bugzilla::User;
 use Bugzilla::Object qw(check_boolean);
+use Bugzilla::User::Setting qw(add_setting get_all_settings get_defaults);
 use Bugzilla::Util qw(trick_taint trim);
 use Scalar::Util qw(blessed);
 
@@ -35,44 +36,21 @@ our $VERSION = '0.01';
 
 BEGIN {
     no warnings 'redefine';
-    *Bugzilla::User::is_email_hidden    = sub { $_[0]->{is_email_hidden} ? 1 : 0 };
+    *Bugzilla::User::is_email_hidden    = \&_is_email_hidden;
     *Bugzilla::User::_orig_match_field  = \&Bugzilla::User::match_field;
     *Bugzilla::User::match_field        = \&_user_match_field; 
     *Bugzilla::Bug::_orig_remove_cc     = \&Bugzilla::Bug::remove_cc;
     *Bugzilla::Bug::remove_cc           = \&_bug_remove_cc;
 }
 
-sub install_update_db {
-    my $dbh = Bugzilla->dbh;
-    $dbh->bz_add_column('profiles', 'is_email_hidden',
-        { TYPE => 'BOOLEAN', NOTNULL => 1, DEFAULT => 'FALSE' });
+sub _is_email_hidden {
+    my ($self) = @_;
+    return get_all_settings($self->id)->{hide_email_address}->{value} eq 'on' ? 1 : 0;
 }
 
-sub object_columns {
+sub install_before_final_checks {
     my ($self, $args) = @_;
-    my ($class, $columns) = @$args{qw(class columns)};
-
-    if ($class->isa('Bugzilla::User')) {
-        push(@$columns, 'is_email_hidden');
-    }
-}
-
-sub object_update_columns {
-    my ($self, $args) = @_;
-    my ($object, $columns) = @$args{qw(object columns)};
-
-    if ($object->isa('Bugzilla::User')) {
-        push(@$columns, 'is_email_hidden');
-    }
-}
-
-sub object_validators {
-    my ($self, $args) = @_;
-    my ($class, $validators) = @$args{qw(class validators)};
-
-    if ($class->isa('Bugzilla::User')) {
-        $validators->{is_email_hidden} = \&Bugzilla::Object::check_boolean;
-    }
+    add_setting('hide_email_address', ['on', 'off'], 'off');
 }
 
 sub template_before_process {
@@ -83,6 +61,8 @@ sub template_before_process {
         _filter_bug_process_bugmail($vars);
     }
     elsif ($file eq 'account/prefs/account.html.tmpl') {
+        my $setting = get_defaults()->{hide_email_address};
+        $vars->{user_can_set_hide_email_address} = $setting->{is_enabled}; 
         _save_account_username($vars);
     }
     elsif ($file eq 'global/user.html.tmpl') {
@@ -489,14 +469,17 @@ sub _user_match_field {
 
 sub _save_account_username {
     my ($vars) = @_;
-    my $user = Bugzilla->user;
-
-    if (defined $vars->{changes_saved}) {
+    if (defined $vars->{changes_saved}
+        and $vars->{user_can_set_hide_email_address})
+    {
+        my $user = Bugzilla->user;
+        my $setting = $user->settings->{hide_email_address};
         my $params = Bugzilla->input_params;
+        my $value = $params->{is_email_hidden} ? 'on' : 'off';
+        $setting->validate_value($value);
+        $setting->set($value);
         my $username = $params->{extern_id};
-        my $is_email_hidden = scalar $params->{is_email_hidden};
         $user->set_extern_id($username) if defined $username;
-        $user->set('is_email_hidden', $is_email_hidden);
         $user->update();
     }
 }

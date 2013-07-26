@@ -23,6 +23,9 @@ package Bugzilla::Extension::AntiSpam::Util;
 use strict;
 
 use Bugzilla::Util qw(trick_taint);
+use Bugzilla::User qw(login_to_id);
+use Bugzilla::User::Setting qw(get_all_settings);
+
 
 use base qw(Exporter);
 @Bugzilla::Extension::AntiSpam::Util::EXPORT = qw(
@@ -36,13 +39,14 @@ sub login_to_extern_id {
 
     return '' if !$login;
 
-    trick_taint($login);
+    my $user_id = login_to_id($login);
+    my $setting = get_all_settings($user_id)->{hide_email_address};
+
     my $extern_id = $dbh->selectrow_array(
         "SELECT extern_id FROM profiles 
-            WHERE " . $dbh->sql_istrcmp('login_name', '?')
-        . " AND is_email_hidden = 1", undef, $login);
+            WHERE userid = ?", undef, $user_id);
 
-    if ($extern_id) {
+    if ($extern_id and $setting->{value} eq 'on') {
         return $extern_id;
     }
 
@@ -61,7 +65,5 @@ sub extern_id_to_login {
                                       undef, $extern_id);
     return $login || '';
 }
-
-
 
 1;
