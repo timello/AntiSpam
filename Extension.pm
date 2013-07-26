@@ -62,8 +62,6 @@ sub template_before_process {
         _filter_bug_process_bugmail($vars);
     }
     elsif ($file eq 'account/prefs/account.html.tmpl') {
-        my $setting = get_defaults()->{hide_email_address};
-        $vars->{user_can_set_hide_email_address} = $setting->{is_enabled}; 
         _save_account_username($vars);
     }
     elsif ($file eq 'global/user.html.tmpl') {
