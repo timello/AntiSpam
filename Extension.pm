@@ -106,6 +106,9 @@ sub template_before_process {
     elsif ($file eq 'bug/create/create.html.tmpl') {
         _filter_bug_create($vars);
     }
+    elsif ($file eq 'global/common-links.html.tmpl') {
+        _filter_common_links($vars);
+    }
 }
 
 sub webservice {
@@ -412,6 +415,14 @@ sub _filter_bug_create {
         }
     }
 }
+
+sub _filter_common_links {
+    my ($vars) = @_;
+    my $user = $vars->{user}();
+    $user->{login_name} = login_to_extern_id($user->login);
+    $vars->{user} = sub { $user };
+}
+
 
 ###########
 # Helpers #
